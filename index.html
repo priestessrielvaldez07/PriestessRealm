@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priestess Venture: The Royal Command Altar</title>
+  <style>
+    :root {
+      --bg-dark: #0a0b10; --panel-dark: #121420; --border-glow: #3a2d54;
+      --accent-magic: #8a2be2; --accent-glow: #da70d6; --text-main: #e2e4f0;
+      --text-dim: #a0a5c0; --gold: #ffd700;
+    }
+    body {
+      background-color: var(--bg-dark); color: var(--text-main);
+      font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .container, .main-layout, .roster-container {
+      width: 100%; max-width: 1100px; margin-bottom: 20px; box-sizing: border-box;
+    }
+    h1 {
+      font-size: 2.2rem; text-align: center; margin: 0;
+      background: linear-gradient(45deg, var(--gold), var(--accent-glow));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+      text-transform: uppercase; letter-spacing: 2px;
+    }
+    .dashboard-status {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      background: var(--panel-dark); border: 1px solid var(--border-glow); 
+      border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: center;
+      font-weight: bold; gap: 10px;
+    }
+    @media (max-width: 768px) { .dashboard-status { grid-template-columns: repeat(2, 1fr); } }
+    .main-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--panel-dark); border: 2px solid var(--border-glow);
+      border-radius: 12px; padding: 20px; display: flex; flex-direction: column;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .panel-title { 
+      font-size: 1.2rem; color: var(--accent-glow); margin: 0 0 15px 0; 
+      padding-bottom: 5px; border-bottom: 1px solid var(--border-glow); font-weight: bold;
+    }
+    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+    label { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; font-weight: bold; }
+    input, select, textarea {
+      background: #0f111a; border: 1px solid var(--border-glow);
+      border-radius: 6px; padding: 10px; color: var(--text-main); font-size: 0.95rem;
+    }
+    .chat-input-container { display: flex; gap: 10px; margin-top: 10px; }
+    .chat-input-container input { flex-grow: 1; }
+    .btn-action {
+      background: linear-gradient(135deg, var(--accent-magic), #4b0082); color: white;
+      border: none; border-radius: 8px; padding: 10px 15px; font-weight: bold; 
+      cursor: pointer; text-transform: uppercase; transition: all 0.2s ease;
+    }
+    .btn-action:hover { background: linear-gradient(135deg, var(--accent-glow), var(--accent-magic)); }
+    .btn-danger { background: linear-gradient(135deg, #ff4d4d, #990000); margin-top: 20px;}
+    .btn-danger:hover { background: linear-gradient(135deg, #ff8080, #cc0000); }
+    .log-box { background: #07080d; border-radius: 8px; padding: 12px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.9rem; border: 1px solid #1c1a27; }
+    .roster-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .roster-table th, .roster-table td { padding: 12px; }
+    .roster-table th { color: var(--accent-glow); border-bottom: 2px solid var(--border-glow); text-transform: uppercase; font-size: 0.85rem; }
+    .roster-table tr { border-bottom: 1px solid #1c1e30; }
+    
+    #loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-dark); display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 9999;
+    }
+    .loader {
+      border: 4px solid var(--panel-dark); border-top: 4px solid var(--accent-glow);
+      border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="loading-overlay">
+    <div class="loader"></div>
+    <p style="margin-top: 20px; color: var(--accent-glow);">Connecting to the Multiverse...</p>
+  </div>
+
+  <div class="container">
+    <h1>Queendom Command Altar</h1>
+    <p style="text-align:center; color: var(--text-dim); font-style: italic; margin: 5px 0 20px 0;">Safe Haven Sanctuary Matrix - Cloud Synced</p>
+    
+    <div class="dashboard-status">
+      <div>Rank: <span id="rank-display" style="color:var(--accent-glow)">Priestess Lv.1</span></div>
+      <div>Resonance: <span id="reso-display" style="color:var(--accent-glow)">0 EXP</span></div>
+      <div>Mana Gems: <span id="mana-count" style="color:var(--gold)">160</span></div>
+      <div>Roster Count: <span id="pop-count" style="color:var(--gold)">0</span></div>
+      <div>Global Harmony: <span id="harm-display" style="color:#4cd964">0%</span></div>
+    </div>
+  </div>
+
+  <div class="main-layout container">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="panel">
+        <div class="panel-title">🔮 Dimension Anchor & Summoning</div>
+        <p style="color: var(--text-dim); margin: 0 0 10px 0; font-size: 0.85rem;">Cost: 160 Mana Gems per summon</p>
+        <div class="form-group">
+          <label>Character Name</label>
+          <input type="text" id="char-name" placeholder="e.g., Percy Jackson" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Book / Series Universe</label>
+          <input type="text" id="char-book" placeholder="e.g., Percy Jackson" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Species / Divine Classification</label>
+          <input type="text" id="char-species" placeholder="e.g., Demigod, God, Healer..." autocomplete="off" onkeydown="handleSummonEnter(event)">
+        </div>
+        <button class="btn-action" style="margin-top: 10px;" onclick="executeSummoning()">Manifest Soul (160 Gems)</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title" style="color: #4cd964; border-color: #4cd9644d;">🛡️ Strategic Force: 5 Strike Teams</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="background: #07080d; border: 1px solid var(--border-glow); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div><b>TEAM 1: Vanguard</b> <span id="t1-status" style="font-size:0.8rem; color:#4cd964; margin-left:10px;">[IDLE]</span></div>
+            <div style="color: var(--text-dim); font-size:0.9rem;" id="t1-members">Roster: Empty</div>
+          </div>
+          <div style="background: #07080d; border: 1px solid var(--border-glow); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div><b>TEAM 2: Night Patrol</b> <span id="t2-status" style="font-size:0.8rem; color:#4cd964; margin-left:10px;">[IDLE]</span></div>
+            <div style="color: var(--text-dim); font-size:0.9rem;" id="t2-members">Roster: Empty</div>
+          </div>
+          <div style="background: #07080d; border: 1px solid var(--border-glow); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div><b>TEAM 3: Scout Unit</b> <span id="t3-status" style="font-size:0.8rem; color:#4cd964; margin-left:10px;">[IDLE]</span></div>
+            <div style="color: var(--text-dim); font-size:0.9rem;" id="t3-members">Roster: Empty</div>
+          </div>
+          <div style="background: #07080d; border: 1px solid var(--border-glow); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div><b>TEAM 4: Infiltration</b> <span id="t4-status" style="font-size:0.8rem; color:#4cd964; margin-left:10px;">[IDLE]</span></div>
+            <div style="color: var(--text-dim); font-size:0.9rem;" id="t4-members">Roster: Empty</div>
+          </div>
+          <div style="background: #07080d; border: 1px solid var(--border-glow); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div><b>TEAM 5: Spell Circle</b> <span id="t5-status" style="font-size:0.8rem; color:#4cd964; margin-left:10px;">[IDLE]</span></div>
+            <div style="color: var(--text-dim); font-size:0.9rem;" id="t5-members">Roster: Empty</div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label style="font-size:0.75rem;">Quick Deploy Input Command</label>
+          <input type="text" id="deploy-input" placeholder="Type: 'Deploy Team 1' and press Enter..." onkeydown="handleDeployEnter(event)">
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="panel" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="panel-title" style="margin-bottom:8px; font-size:1.1rem; color:#bb99ff;">📜 Chancellor HARRY (Humorous Lore-Master)</div>
+        <div id="harry-log" class="log-box" style="flex-grow: 1; height: 200px;">
+          <p style="color: #bb99ff; margin: 0;">[HARRY]: The multiverse connection is stable. But wait... I don't see your royal decree in the archives yet. Before we summon anyone, by what name and title should I announce you to the realm?</p>
+        </div>
+        <div class="chat-input-container">
+          <input type="text" id="harry-input" placeholder="e.g., 'I am Elara, the Moon Priestess'" autocomplete="off" onkeydown="handleHarryEnter(event)">
+          <button class="btn-action" onclick="promptHarry()">Send</button>
+        </div>
+      </div>
+
+      <div class="panel" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="panel-title" style="margin-bottom:8px; font-size:1.1rem; color:#4cd964;">🤖 Quest Director SPOT (Analytical Robot)</div>
+        <div id="spot-log" class="log-box" style="flex-grow: 1; height: 200px;">
+          <p style="color: #4cd964; margin: 0;">[SPOT]: *Whir, click.* Greetings, Queen. I am Spot. I track quests, population, and logistics. *tilts head* Ask me for a quest or queendom status.</p>
+        </div>
+        <div class="chat-input-container">
+          <input type="text" id="spot-input" placeholder="Ask Spot for a quest or status..." autocomplete="off" onkeydown="handleSpotEnter(event)">
+          <button class="btn-action" onclick="promptSpot()">Inquire</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel container roster-container">
+    <div class="panel-title">🗂️ Living Soul Registry Matrix</div>
+    <div style="overflow-x: auto;">
+      <table class="roster-table">
+        <thead>
+          <tr>
+            <th>Character Name</th>
+            <th>Book Origin</th>
+            <th>Species Class</th>
+            <th>Status</th>
+            <th>Trust</th>
+            <th>Resonance Tier</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody id="roster-body">
+          <tr id="empty-state"><td colspan="7" style="padding: 20px; text-align: center; color: var(--text-dim); font-style: italic;">Your small queendom is empty. Summon your first character!</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn-action btn-danger" onclick="resetQueendom()">⚠️ RESET QUEENDOM (Wipe Database)</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.11.1";
+
+    // ⚠️ SECURITY WARNING: Keep your GitHub repo PRIVATE if you leave your key here!
+    const API_KEY = "AQ.Ab8RN6Jl3DAOzB4d6HIbRgDHcosjH60tujtM_bPA8Ly7RZcJYg"; 
+    const genAI = new GoogleGenerativeAI(API_KEY);
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCm3DJxYNJA6mqsUrS-iLaNM5dMm3Vhl58",
+      authDomain: "priestessrealm.firebaseapp.com",
+      projectId: "priestessrealm",
+      storageBucket: "priestessrealm.firebasestorage.app",
+      messagingSenderId: "656066477490",
+      appId: "1:656066477490:web:a3d9996b5e2c24fd0e38ab"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let userId = null;
+    let gameState = {
+      sovereign: { rank: 1, resonance: 0, manaGems: 160, chronicle: [], title: "Unknown", name: "Unknown" },
+      characters: [],
+      quests: [],
+      queendom: { zones: ['Palace', 'Commoner City', 'Dragon Peaks'], npcPopulation: 0, globalHarmony: 0 }
+    };
+
+    let harryHistory = [];
+    let spotHistory = [];
+
+    async function getHarryResponse(userMessage) {
+      try {
+        const model = genAI.getGenerativeModel({ 
+          model: "gemini-1.5-flash",
+          systemInstruction: "You are Chancellor Harry, the humorous, witty, and slightly sarcastic but deeply loyal advisor to the Queen. You are NOT a robot. You speak naturally, make clever observations, and manage the multiverse sanctuary. Keep responses concise (under 4 sentences). Use your knowledge of canonical lore when discussing summoned characters."
+        });
+        const chat = model.startChat({ history: harryHistory, generationConfig: { maxOutputTokens: 300 } });
+        const result = await chat.sendMessage(userMessage);
+        const text = result.response.text();
+        harryHistory.push({ role: "user", parts: [{ text: userMessage }] });
+        harryHistory.push({ role: "model", parts: [{ text: text }] });
+        if (harryHistory.length > 10) harryHistory = harryHistory.slice(-10);
+        return text;
+      } catch (error) {
+        return "[The multiverse connection is fuzzy. Check your API key.]";
+      }
+    }
+
+    async function getSpotResponse(userMessage) {
+      try {
+        const stateSummary = `Current State: ${gameState.characters.length} characters, ${gameState.sovereign.manaGems} Mana Gems, ${gameState.queendom.npcPopulation} NPCs.`;
+        const model = genAI.getGenerativeModel({ 
+          model: "gemini-1.5-flash",
+          systemInstruction: `You are Spot, a small, curious, hardworking robot similar to WALL-E. You do NOT act like a dog (no barking, no 'yip'). You communicate with cute robotic sounds (Bzzt, whir, click), expressive physical actions (*tilts head*, *spins treads*), and short, innocent, but highly analytical sentences about quests, stats, and logistics. ${stateSummary}`
+        });
+        const chat = model.startChat({ history: spotHistory, generationConfig: { maxOutputTokens: 300 } });
+        const result = await chat.sendMessage(userMessage);
+        const text = result.response.text();
+        spotHistory.push({ role: "user", parts: [{ text: userMessage }] });
+        spotHistory.push({ role: "model", parts: [{ text: text }] });
+        if (spotHistory.length > 10) spotHistory = spotHistory.slice(-10);
+        return text;
+      } catch (error) {
+        return "[Bzzt... multiverse connection fuzzy. Check API key.]";
+      }
+    }
+
+    async function generateSummoningLore(name, book, species) {
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `The user just summoned ${name} from ${book}, who is a ${species}. Provide a short, humorous observation from Chancellor Harry about this character suddenly being yanked into a random, dangerous multiverse realm. Follow it with a 1-sentence in-character reaction from ${name} based on their actual canonical lore, reacting to this sudden displacement. Format exactly as:\nHARRY: [text]\n${name.toUpperCase()}: [text]`;
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+      } catch (error) {
+        return `HARRY: Oh dear, the lore archives are fuzzy. But they are here!\n${name.toUpperCase()}: "Where... where am I?"`;
+      }
+    }
+
+    function getResonanceTier(trust) {
+      if (trust >= 71) return { name: "Sovereign's Hand", color: "#ffd700" };
+      if (trust >= 31) return { name: "Ally", color: "#4cd964" };
+      return { name: "Stranger", color: "#ff4444" };
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        userId = user.uid;
+        await loadGameData();
+        document.getElementById('loading-overlay').style.display = 'none';
+        updateDashboard();
+        renderRoster();
+      }
+    });
+
+    signInAnonymously(auth).catch((error) => console.error("Auth Error:", error));
+
+    async function loadGameData() {
+      try {
+        const sovereignDoc = await getDoc(doc(db, "users", userId, "data", "sovereign"));
+        if (sovereignDoc.exists()) gameState.sovereign = sovereignDoc.data();
+        const charsSnap = await getDocs(collection(db, "users", userId, "characters"));
+        gameState.characters = charsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const queendomDoc = await getDoc(doc(db, "users", userId, "data", "queendom"));
+        if (queendomDoc.exists()) gameState.queendom = queendomDoc.data();
+      } catch (e) { console.error("Error loading data:", e); }
+    }
+
+    async function saveSovereign() { await setDoc(doc(db, "users", userId, "data", "sovereign"), gameState.sovereign); }
+    async function saveQueendom() { await setDoc(doc(db, "users", userId, "data", "queendom"), gameState.queendom); }
+
+    function updateDashboard() {
+      document.getElementById('mana-count').innerText = gameState.sovereign.manaGems;
+      document.getElementById('pop-count').innerText = gameState.characters.length;
+      document.getElementById('harm-display').innerText = `${gameState.queendom.globalHarmony}%`;
+      document.getElementById('reso-display').innerText = `${gameState.sovereign.resonance} EXP`;
+    }
+
+    function renderRoster() {
+      const tbody = document.getElementById('roster-body');
+      tbody.innerHTML = '';
+      if (gameState.characters.length === 0) {
+        tbody.innerHTML = '<tr id="empty-state"><td colspan="7" style="padding: 20px; text-align: center; color: var(--text-dim); font-style: italic;">Your small queendom is empty. Summon your first character!</td></tr>';
+        return;
+      }
+      gameState.characters.forEach((char) => {
+        const tr = document.createElement('tr');
+        let statusColor = '#ff4444';
+        if (char.status === 'Available') statusColor = '#4cd964';
+        if (char.status === 'In Transit') statusColor = '#ffcc00';
+        if (char.status === 'Injured') statusColor = '#ff4444';
+        
+        const tier = getResonanceTier(char.trust);
+        
+        tr.innerHTML = `
+          <td><b>${char.name}</b></td>
+          <td style="color:#da70d6">${char.book}</td>
+          <td style="color:#66ffb3; font-weight:bold;">${char.species}</td>
+          <td style="color:${statusColor}">${char.status}</td>
+          <td style="color:var(--gold)">${char.trust}/100</td>
+          <td style="color:${tier.color}">${tier.name}</td>
+          <td style="color:#a8dadc">${char.role || 'Unassigned'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function appendLog(elementId, color, speaker, message) {
+      const box = document.getElementById(elementId);
+      const p = document.createElement('p');
+      p.style.margin = "5px 0 0 0"; 
+      p.style.color = color;
+      p.innerHTML = `<b>[${speaker}]:</b> ${message}`;
+      box.appendChild(p);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    window.handleSummonEnter = (e) => { if (e.key === "Enter") window.executeSummoning(); };
+    window.handleHarryEnter = (e) => { if (e.key === "Enter") window.promptHarry(); };
+    window.handleSpotEnter = (e) => { if (e.key === "Enter") window.promptSpot(); };
+    window.handleDeployEnter = (e) => { if (e.key === "Enter") window.executeDeploymentOrder(); };
+
+    window.resetQueendom = async function() {
+      if(!confirm("Are you sure? This will wipe all characters, quests, and reset your gems to 160!")) return;
+      const charsSnap = await getDocs(collection(db, "users", userId, "characters"));
+      const deletePromises = charsSnap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      gameState.sovereign = { rank: 1, resonance: 0, manaGems: 160, chronicle: [], title: "Unknown", name: "Unknown" };
+      gameState.characters = [];
+      gameState.queendom = { zones: ['Palace', 'Commoner City', 'Dragon Peaks'], npcPopulation: 0, globalHarmony: 0 };
+      harryHistory = [];
+      spotHistory = [];
+      await saveSovereign();
+      await saveQueendom();
+      updateDashboard();
+      renderRoster();
+      document.getElementById('harry-log').innerHTML = '<p style="color: #bb99ff; margin: 0;">[HARRY]: The multiverse has been wiped clean. The archives are empty. By what name and title should I announce you to the realm?</p>';
+      document.getElementById('spot-log').innerHTML = '<p style="color: #4cd964; margin: 0;">[SPOT]: *Whir, click.* Memory banks cleared. Greetings, Queen. I am Spot. I track quests, population, and logistics. *tilts head* Ask me for a quest or queendom status.</p>';
+    };
+
+    window.executeSummoning = async function() {
+      const name = document.getElementById('char-name').value.trim();
+      const book = document.getElementById('char-book').value.trim();
+      const species = document.getElementById('char-species').value.trim();
+
+      if (!name || !book || !species) { alert("All fields must be entered."); return; }
+      if (gameState.sovereign.manaGems < 160) { alert("Insufficient Mana Gems! You need 160 gems to summon."); return; }
+
+      gameState.sovereign.manaGems -= 160;
+      await saveSovereign();
+      updateDashboard();
+
+      appendLog('harry-log', '#ffd700', 'SYSTEM', `Scanning multiverse archives for ${name}...`);
+
+      const loreText = await generateSummoningLore(name, book, species);
+      
+      // Parse the AI response
+      const harryMatch = loreText.match(/HARRY:\s*(.*)/i);
+      const charMatch = loreText.match(new RegExp(`${name.toUpperCase()}:\\s*(.*)`, 'i'));
+      
+      const harryResponse = harryMatch ? harryMatch[1] : "Oh dear, the dimensional tether slipped!";
+      const charResponse = charMatch ? charMatch[1] : "Where... where am I?";
+
+      appendLog('harry-log', '#bb99ff', 'HARRY', harryResponse);
+      setTimeout(() => {
+        appendLog('harry-log', '#66ffb3', name.toUpperCase(), charResponse);
+      }, 800);
+
+      const godKeywords = ['god', 'deity', 'divine', 'titan', 'olympian', 'angel', 'demon lord'];
+      const isGodTier = godKeywords.some(k => species.toLowerCase().includes(k));
+
+      const newChar = { 
+        name, book, species, 
+        status: isGodTier ? "Disoriented" : "In Transit", 
+        trust: 0, allegiance: 0, 
+        role: "Unassigned", location: "Palace", locationStatus: isGodTier ? "In Sanctuary" : "In Transit", 
+        hasBeenExplained: false, 
+        transitRealm: "Random Multiverse Realm", transitHazard: "Unknown Hazards",
+        distanceToPortal: 30, portalDirection: "North",
+        rescueSquad: [], isInjured: false
+      };
+
+      try {
+        const docRef = await addDoc(collection(db, "users", userId, "characters"), newChar);
+        newChar.id = docRef.id;
+        gameState.characters.push(newChar);
+        renderRoster();
+        
+        if (!isGodTier) {
+          setTimeout(() => {
+            appendLog('harry-log', '#ff4444', 'SYSTEM', `[TRANSIT ALERT]: ${name} is stranded. Ask Harry "Where is the portal for ${name}?" and give them directions (e.g., "Percy, run North").`);
+          }, 2000);
+        }
+        
+        document.getElementById('char-name').value = "";
+        document.getElementById('char-book').value = "";
+        document.getElementById('char-species').value = "";
+        document.getElementById('char-name').focus();
+      } catch (e) { console.error("Error summoning:", e); alert("A multiverse error occurred."); }
+    };
+
+    window.promptHarry = async function() {
+      const input = document.getElementById('harry-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      appendLog('harry-log', '#e2e4f0', 'YOU', val);
+      input.value = "";
+
+      // Show typing indicator
+      const typingId = 'typing-' + Date.now();
+      appendLog('harry-log', '#a0a5c0', 'HARRY', '<i>Consulting the cosmic archives...</i>');
+      const typingEl = document.getElementById(typingId); // Simplified for this example
+
+      const response = await getHarryResponse(val);
+      
+      // Remove typing indicator (simplified)
+      const box = document.getElementById('harry-log');
+      box.lastElementChild.remove(); 
+
+      appendLog('harry-log', '#bb99ff', 'HARRY', response);
+
+      // Simple local state updates for trust if calming
+      const msg = val.toLowerCase();
+      const activeSpeaker = gameState.characters.find(c => msg.includes(c.name.toLowerCase()) || msg.includes(c.name.split(' ')[0].toLowerCase()));
+      if (activeSpeaker && !activeSpeaker.hasBeenExplained && (msg.includes("explain") || msg.includes("safe") || msg.includes("sanctuary"))) {
+        activeSpeaker.hasBeenExplained = true;
+        activeSpeaker.trust = 15; activeSpeaker.status = "Available";
+        await updateDoc(doc(db, "users", userId, "characters", activeSpeaker.id), { hasBeenExplained: true, trust: 15, status: "Available" });
+        renderRoster();
+      }
+    };
+
+    window.promptSpot = async function() {
+      const input = document.getElementById('spot-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      appendLog('spot-log', '#e2e4f0', 'YOU', val);
+      input.value = "";
+
+      const response = await getSpotResponse(val);
+      appendLog('spot-log', '#4cd964', 'SPOT', response);
+
+      // Simple local state updates for role assignment
+      const msg = val.toLowerCase();
+      if (msg.includes("assign") && msg.includes("as")) {
+        const match = msg.match(/assign\s+([a-zA-Z\s]+?)\s+as\s+([a-zA-Z\s]+)/);
+        if (match) {
+          const charName = match[1].trim();
+          const roleName = match[2].trim();
+          const char = gameState.characters.find(c => c.name.toLowerCase() === charName.toLowerCase());
+          if (char) {
+            char.role = roleName;
+            await updateDoc(doc(db, "users", userId, "characters", char.id), { role: roleName });
+            renderRoster();
+          }
+        }
+      }
+    };
+
+    window.executeDeploymentOrder = function() {
+      const input = document.getElementById('deploy-input');
+      const val = input.value.trim();
+      if (!val) return;
+      const cmd = val.toLowerCase();
+      input.value = "";
+      if (gameState.characters.length === 0) {
+        appendLog('harry-log', '#ff4444', 'HARRY', "You can't deploy yet! Summon someone first.");
+        return;
+      }
+      let tNum = 1;
+      if(cmd.includes("2")) tNum = 2;
+      if(cmd.includes("3")) tNum = 3;
+      if(cmd.includes("4")) tNum = 4;
+      if(cmd.includes("5")) tNum = 5;
+      let leader = gameState.characters[gameState.characters.length - 1];
+      document.getElementById(`t${tNum}-members`).innerText = `Leader: ${leader.name}`;
+      document.getElementById(`t${tNum}-status`).innerText = "[DEPLOYED]";
+      document.getElementById(`t${tNum}-status`).style.color = "#ffcc00";
+      appendLog('harry-log', '#bb99ff', 'HARRY', `Team ${tNum} deployed! ${leader.name} is leading the mission.`);
+    };
+  </script>
+</body>
+</html>
